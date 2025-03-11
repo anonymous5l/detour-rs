@@ -30,7 +30,7 @@
 /// }
 /// # fn main() { }
 /// ```
-#[cfg(feature = "nightly")]
+
 #[macro_export]
 // Inspired by: https://github.com/Jascha-N/minhook-rs
 macro_rules! static_detour {
@@ -129,7 +129,7 @@ macro_rules! static_detour {
         $($modifier) * fn __ffi_detour(
             $($argument_name: $argument_type),*) -> $return_type {
           #[allow(unused_unsafe)]
-          ($name.__detour())($($argument_name),*)
+          ($name.__detour())(($($argument_name),*))
         }
 
         $crate::StaticDetour::__new(__ffi_detour)
@@ -180,11 +180,11 @@ macro_rules! impl_hookable {
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "cdecl"    fn($($ty),*) -> Ret));
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "stdcall"  fn($($ty),*) -> Ret));
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "fastcall" fn($($ty),*) -> Ret));
+    #[cfg(any(target_arch = "x86_64"))]
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "win64"    fn($($ty),*) -> Ret));
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "C"        fn($($ty),*) -> Ret));
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "system"   fn($($ty),*) -> Ret));
-
-    #[cfg(feature = "nightly")]
+    #[cfg(any(target_arch = "x86"))]
     impl_hookable!(@impl_pair ($($nm : $ty),*) (extern "thiscall" fn($($ty),*) -> Ret));
   };
 
@@ -203,26 +203,28 @@ macro_rules! impl_hookable {
   (@impl_unsafe ($($nm:ident : $ty:ident),*) ($target:ty) ($detour:ty)) => {
     unsafe impl<Ret: 'static, $($ty: 'static),*> HookableWith<$detour> for $target {}
 
-    #[cfg(feature = "nightly")]
     impl<Ret: 'static, $($ty: 'static),*> $crate::StaticDetour<$target> {
       #[doc(hidden)]
-      pub unsafe fn call(&self, $($nm : $ty),*) -> Ret {
-        let original: $target = ::std::mem::transmute(self.trampoline().expect("calling detour trampoline"));
-        original($($nm),*)
+      pub fn call(&self, $($nm : $ty),*) -> Ret {
+        unsafe {
+          let original: $target = ::std::mem::transmute(self.trampoline().expect("calling detour trampoline"));
+          original($($nm),*)
+        }
       }
     }
 
     impl<Ret: 'static, $($ty: 'static),*> $crate::GenericDetour<$target> {
       #[doc(hidden)]
-      pub unsafe fn call(&self, $($nm : $ty),*) -> Ret {
-        let original: $target = ::std::mem::transmute(self.trampoline());
-        original($($nm),*)
+      pub fn call(&self, $($nm : $ty),*) -> Ret {
+        unsafe {
+          let original: $target = ::std::mem::transmute(self.trampoline());
+          original($($nm),*)
+        }
       }
     }
   };
 
   (@impl_safe ($($nm:ident : $ty:ident),*) ($fn_type:ty)) => {
-    #[cfg(feature = "nightly")]
     impl<Ret: 'static, $($ty: 'static),*> $crate::StaticDetour<$fn_type> {
       #[doc(hidden)]
       pub fn call(&self, $($nm : $ty),*) -> Ret {
@@ -249,8 +251,8 @@ macro_rules! impl_hookable {
       type Arguments = ($($ty,)*);
       type Output = Ret;
 
-      unsafe fn from_ptr(ptr: *const ()) -> Self {
-        ::std::mem::transmute(ptr)
+      fn from_ptr(ptr: *const ()) -> Self {
+        unsafe {::std::mem::transmute(ptr)}
       }
 
       fn to_ptr(&self) -> *const () {

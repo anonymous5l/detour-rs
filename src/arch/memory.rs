@@ -12,15 +12,15 @@ lazy_static! {
 
 /// Allocates PIC code at the specified address.
 pub fn allocate_pic(
-  pool: &mut alloc::ThreadAllocator,
-  emitter: &pic::CodeEmitter,
-  origin: *const (),
+    pool: &mut alloc::ThreadAllocator,
+    emitter: &pic::CodeEmitter,
+    origin: *const (),
 ) -> Result<alloc::ExecutableMemory> {
-  // Allocate memory close to the origin
-  pool.allocate(origin, emitter.len()).map(|mut memory| {
-    // Generate code for the obtained address
-    let code = emitter.emit(memory.as_ptr() as *const _);
-    memory.copy_from_slice(code.as_slice());
-    memory
-  })
+    // Allocate memory close to the origin
+    pool.allocate(origin, emitter.len()).map(|mut memory| {
+        // Generate code for the obtained address
+        let code = emitter.emit(memory.as_ptr() as *const _);
+        memory.copy_from_slice(code.as_slice());
+        memory
+    })
 }

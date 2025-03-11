@@ -27,21 +27,23 @@ default.
 This library provides CI for these targets:
 
 - Linux
-  * `i686-unknown-linux-gnu`
-  * `x86_64-unknown-linux-gnu`
-  * `x86_64-unknown-linux-musl`
+    * `i686-unknown-linux-gnu`
+    * `x86_64-unknown-linux-gnu`
+    * `x86_64-unknown-linux-musl`
 - Windows
-  * `i686-pc-windows-gnu`
-  * `i686-pc-windows-msvc`
-  * `x86_64-pc-windows-gnu`
-  * `x86_64-pc-windows-msvc`
+    * `i686-pc-windows-gnu`
+    * `i686-pc-windows-msvc`
+    * `x86_64-pc-windows-gnu`
+    * `x86_64-pc-windows-msvc`
 - macOS
-  * ~~`i686-apple-darwin`~~
-  * `x86_64-apple-darwin`
+    * ~~`i686-apple-darwin`~~
+    * `x86_64-apple-darwin`
 
 ## Installation
 
-Add this to your `Cargo.toml`:
+> DOES NOT UPLOAD IN CRATES DO NOT ADD DEPS
+
+~~Add this to your `Cargo.toml`:~~
 
 ```toml
 [dependencies]
@@ -61,41 +63,42 @@ static_detour! {
 }
 
 fn add5(val: i32) -> i32 {
-  val + 5
+    val + 5
 }
 
 fn add10(val: i32) -> i32 {
-  val + 10
+    val + 10
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-  // Reroute the 'add5' function to 'add10' (can also be a closure)
-  unsafe { Test.initialize(add5, add10)? };
+    // Reroute the 'add5' function to 'add10' (can also be a closure)
+    unsafe { Test.initialize(add5, add10)? };
 
-  assert_eq!(add5(1), 6);
-  assert_eq!(Test.call(1), 6);
+    assert_eq!(add5(1), 6);
+    assert_eq!(Test.call(1), 6);
 
-  // Hooks must be enabled to take effect
-  unsafe { Test.enable()? };
+    // Hooks must be enabled to take effect
+    unsafe { Test.enable()? };
 
-  // The original function is detoured to 'add10'
-  assert_eq!(add5(1), 11);
+    // The original function is detoured to 'add10'
+    assert_eq!(add5(1), 11);
 
-  // The original function can still be invoked using 'call'
-  assert_eq!(Test.call(1), 6);
+    // The original function can still be invoked using 'call'
+    assert_eq!(Test.call(1), 6);
 
-  // It is also possible to change the detour whilst hooked
-  Test.set_detour(|val| val - 5);
-  assert_eq!(add5(5), 0);
+    // It is also possible to change the detour whilst hooked
+    Test.set_detour(|val| val - 5);
+    assert_eq!(add5(5), 0);
 
-  unsafe { Test.disable()? };
+    unsafe { Test.disable()? };
 
-  assert_eq!(add5(1), 6);
-  Ok(())
+    assert_eq!(add5(1), 6);
+    Ok(())
 }
 ```
 
 - A Windows API hooking example is available [here](./examples/messageboxw_detour.rs); build it by running:
+
 ```
 $ cargo build --example messageboxw_detour
 ```
@@ -131,13 +134,23 @@ derivative code of his work.
   trailing `NOP` instructions will be replaced, to make room for the detour.*
 
 <!-- Links -->
+
 [azure-shield]: https://img.shields.io/azure-devops/build/darfink/detour-rs/2/master?label=Azure%20Pipelines&logo=azure-pipelines&style=flat-square
+
 [azure]: https://dev.azure.com/darfink/detour-rs/_build/latest?definitionId=1&branchName=master
+
 [crate-shield]: https://img.shields.io/crates/v/detour.svg?style=flat-square
+
 [crate]: https://crates.io/crates/detour
+
 [rust-shield]: https://img.shields.io/badge/powered%20by-rust-blue.svg?style=flat-square
+
 [rust]: https://www.rust-lang.org
+
 [docs-shield]: https://img.shields.io/badge/docs-crates-green.svg?style=flat-square
+
 [docs]: https://docs.rs/detour/
+
 [minhook-author]: https://github.com/Jascha-N
+
 [minhook]: https://github.com/Jascha-N/minhook-rs/

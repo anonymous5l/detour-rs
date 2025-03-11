@@ -47,43 +47,45 @@ use std::marker::PhantomData;
 /// ```
 #[derive(Debug)]
 pub struct GenericDetour<T: Function> {
-  phantom: PhantomData<T>,
-  detour: Detour,
+    phantom: PhantomData<T>,
+    detour: Detour,
 }
 
 impl<T: Function> GenericDetour<T> {
-  /// Create a new hook given a target function and a compatible detour
-  /// function.
-  pub unsafe fn new<D>(target: T, detour: D) -> Result<Self>
-  where
-    T: HookableWith<D>,
-    D: Function,
-  {
-    Detour::new(target.to_ptr(), detour.to_ptr()).map(|detour| GenericDetour {
-      phantom: PhantomData,
-      detour,
-    })
-  }
+    /// Create a new hook given a target function and a compatible detour
+    /// function.
+    pub fn new<D>(target: T, detour: D) -> Result<Self>
+    where
+        T: HookableWith<D>,
+        D: Function,
+    {
+        unsafe {
+            Detour::new(target.to_ptr(), detour.to_ptr()).map(|detour| GenericDetour {
+                phantom: PhantomData,
+                detour,
+            })
+        }
+    }
 
-  /// Enables the detour.
-  pub unsafe fn enable(&self) -> Result<()> {
-    self.detour.enable()
-  }
+    /// Enables the detour.
+    pub fn enable(&self) -> Result<()> {
+        self.detour.enable()
+    }
 
-  /// Disables the detour.
-  pub unsafe fn disable(&self) -> Result<()> {
-    self.detour.disable()
-  }
+    /// Disables the detour.
+    pub fn disable(&self) -> Result<()> {
+        self.detour.disable()
+    }
 
-  /// Returns whether the detour is enabled or not.
-  pub fn is_enabled(&self) -> bool {
-    self.detour.is_enabled()
-  }
+    /// Returns whether the detour is enabled or not.
+    pub fn is_enabled(&self) -> bool {
+        self.detour.is_enabled()
+    }
 
-  /// Returns a reference to the generated trampoline.
-  pub(crate) fn trampoline(&self) -> &() {
-    self.detour.trampoline()
-  }
+    /// Returns a reference to the generated trampoline.
+    pub(crate) fn trampoline(&self) -> &() {
+        self.detour.trampoline()
+    }
 }
 
 unsafe impl<T: Function> Send for GenericDetour<T> {}

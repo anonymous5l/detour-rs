@@ -1,13 +1,3 @@
-#![recursion_limit = "1024"]
-#![cfg_attr(
-  feature = "nightly",
-  feature(const_fn_trait_bound, unboxed_closures, abi_thiscall)
-)]
-#![cfg_attr(
-  all(feature = "nightly", test),
-  feature(naked_functions, core_intrinsics, asm)
-)]
-
 //! A cross-platform detour library written in Rust.
 //!
 //! ## Intro
@@ -112,50 +102,50 @@ mod util;
 
 #[cfg(test)]
 mod tests {
-  use super::*;
-  use crate::Result;
-  use matches::assert_matches;
+    use super::*;
+    use crate::Result;
+    use matches::assert_matches;
 
-  #[test]
-  fn detours_share_target() -> Result<()> {
-    #[inline(never)]
-    extern "C" fn add(x: i32, y: i32) -> i32 {
-      unsafe { std::ptr::read_volatile(&x as *const i32) + y }
+    #[test]
+    fn detours_share_target() -> Result<()> {
+        #[inline(never)]
+        extern "C" fn add(x: i32, y: i32) -> i32 {
+            unsafe { std::ptr::read_volatile(&x as *const i32) + y }
+        }
+
+        let hook1 = unsafe {
+            extern "C" fn sub(x: i32, y: i32) -> i32 {
+                x - y
+            }
+            GenericDetour::<extern "C" fn(i32, i32) -> i32>::new(add, sub)?
+        };
+
+        unsafe { hook1.enable()? };
+        assert_eq!(add(5, 5), 0);
+
+        let hook2 = unsafe {
+            extern "C" fn div(x: i32, y: i32) -> i32 {
+                x / y
+            }
+            GenericDetour::<extern "C" fn(i32, i32) -> i32>::new(add, div)?
+        };
+
+        unsafe { hook2.enable()? };
+
+        // This will call the previous hook's detour
+        assert_eq!(hook2.call(5, 5), 0);
+        assert_eq!(add(10, 5), 2);
+        Ok(())
     }
 
-    let hook1 = unsafe {
-      extern "C" fn sub(x: i32, y: i32) -> i32 {
-        x - y
-      }
-      GenericDetour::<extern "C" fn(i32, i32) -> i32>::new(add, sub)?
-    };
+    #[test]
+    fn same_detour_and_target() {
+        #[inline(never)]
+        extern "C" fn add(x: i32, y: i32) -> i32 {
+            unsafe { std::ptr::read_volatile(&x as *const i32) + y }
+        }
 
-    unsafe { hook1.enable()? };
-    assert_eq!(add(5, 5), 0);
-
-    let hook2 = unsafe {
-      extern "C" fn div(x: i32, y: i32) -> i32 {
-        x / y
-      }
-      GenericDetour::<extern "C" fn(i32, i32) -> i32>::new(add, div)?
-    };
-
-    unsafe { hook2.enable()? };
-
-    // This will call the previous hook's detour
-    assert_eq!(hook2.call(5, 5), 0);
-    assert_eq!(add(10, 5), 2);
-    Ok(())
-  }
-
-  #[test]
-  fn same_detour_and_target() {
-    #[inline(never)]
-    extern "C" fn add(x: i32, y: i32) -> i32 {
-      unsafe { std::ptr::read_volatile(&x as *const i32) + y }
+        let err = unsafe { RawDetour::new(add as *const (), add as *const ()).unwrap_err() };
+        assert_matches!(err, Error::SameAddress);
     }
-
-    let err = unsafe { RawDetour::new(add as *const (), add as *const ()).unwrap_err() };
-    assert_matches!(err, Error::SameAddress);
-  }
 }

@@ -9,33 +9,32 @@ name = "detour"
 readme = "README.md"
 repository = "https://github.com/darfink/detour-rs"
 version = "0.8.0"
-edition = "2018"
+edition = "2024"
 
 [badges]
 azure-devops = { project = "darfink/detour-rs", pipeline = "darfink.detour-rs" }
 
 [dependencies]
-cfg-if = "1.0.0"
-generic-array = "0.14.1"
-lazy_static = "1.2"
-libc = "0.2.45"
+generic-array = "1.2.0"
+lazy_static = "1.5"
+libc = "0.2.169"
 mmap = { package = "mmap-fixed", version = "0.1.0" }
-region = "2.0.0"
+region = "3.0.2"
 slice-pool = "0.4.1"
 
 [dev-dependencies]
 matches = "0.1.8"
 
-[features]
-default = ["nightly"]
-nightly = []
-
 [[example]]
 name = "messageboxw_detour"
+crate-type = ["cdylib"]
+
+[[example]]
+name = "create_window_detour"
 crate-type = ["cdylib"]
 
 [target."cfg(any(target_arch = \"x86\", target_arch = \"x86_64\"))".dependencies]
 udis = { package = "libudis86-sys", version = "0.2.1" }
 
 [target."cfg(windows)".dev-dependencies]
-winapi = { version = "0.3.7", features = ["minwindef", "windef", "winnt", "libloaderapi"] }
+windows-sys = { version = "0.59.0", features = ["Win32", "Win32_Foundation", "Win32_System_SystemServices", "Win32_UI_WindowsAndMessaging", "Win32_System_LibraryLoader"] }
